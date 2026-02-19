@@ -26,14 +26,17 @@ const Login = () => {
   const handleSubmit = async (e) => {
     setLoading(true);
     e.preventDefault();
-try {
-  const data = await loginUser(formData);
-  setUser(data);
-  successToast("Login successful!");
-  navigate("/dashboard");
-} catch (error) {
-  errorToast(error.response?.data?.message);
-}
+    try {
+      const data = await loginUser(formData);
+      setUser(data);
+      successToast("Login successful!");
+      navigate("/dashboard");
+    } catch (error) {
+      errorToast("Internal Server Error", error.response?.data?.message);
+    }
+    finally{
+      setLoading(false);
+    }
   };
 
   return (

@@ -5,7 +5,7 @@ import { successToast, errorToast } from "../utils/toast";
 import Button from "../components/Button";
 
 const Signup = () => {
-
+  console.log("Signup component re render")
   const [formData, setFormData] = useState({
     name: "",
     email: "",

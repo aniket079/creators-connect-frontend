@@ -7,7 +7,8 @@ import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import { Toaster } from "react-hot-toast";
 import VerifyOtp from "./pages/Verifyotp";
-
+import CreateAsset from "./pages/CreateAsset";
+import MyAssets from "./pages/MyAsset";
 function App() {
   return (
     <BrowserRouter>
@@ -17,7 +18,7 @@ function App() {
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-        
+
           {/* Public Routes */}
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
@@ -35,6 +36,27 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/create-asset"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreateAsset />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-assets"
+            element={
+                <ProtectedRoute>
+              <Layout>
+                <MyAssets />
+              </Layout>
+              </ProtectedRoute>
+            }
+          />
+
 
         </Routes>
       </AuthProvider>
