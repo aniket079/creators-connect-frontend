@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { verifyOtp } from "../api/authApi";
-import { useAuth } from "../context/AuthContext";
+import useAuth from "../hooks/useAuth";
 import { successToast, errorToast } from "../utils/toast";
 import Button from "../components/Button";
 
@@ -9,7 +9,7 @@ const VerifyOtp = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setAuthenticatedUser } = useAuth();
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,10 +30,10 @@ const VerifyOtp = () => {
         otp
       });
 
-      setUser(data);
+      setAuthenticatedUser(data);
       successToast("Account created successfully!");
 
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
 
     } catch (error) {
       errorToast(error.response?.data?.message);
@@ -43,20 +43,26 @@ const VerifyOtp = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="bg-white shadow-xl rounded-2xl p-8 w-96">
+    <div className="cc-page-shell flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-950/10">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-blue-600 text-sm font-black text-white">
+          OTP
+        </div>
 
-        <h2 className="text-2xl font-semibold text-center mb-6">
+        <h2 className="mt-6 text-center text-3xl font-black text-slate-950">
           Verify OTP
         </h2>
+        <p className="mt-2 text-center text-sm text-slate-500">
+          Enter the code sent to your email to activate your account.
+        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
 
           <input
             placeholder="Enter 6-digit OTP"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2 text-center tracking-widest"
+            className="cc-input text-center text-lg font-bold tracking-widest"
           />
 
           <Button type="submit" disabled={loading}>

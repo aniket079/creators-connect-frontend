@@ -7,11 +7,11 @@ const Button = ({
 }) => {
 
   const base =
-    "w-full py-2 rounded-lg transition font-medium";
+    "w-full rounded-lg px-4 py-3 text-sm font-bold transition disabled:cursor-not-allowed";
 
   const styles = {
     primary:
-      "bg-blue-600 text-white hover:bg-blue-700",
+      "bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700",
     secondary:
       "bg-gray-200 text-gray-800 hover:bg-gray-300",
     danger:

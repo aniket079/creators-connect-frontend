@@ -3,12 +3,23 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import { Toaster } from "react-hot-toast";
 import VerifyOtp from "./pages/Verifyotp";
 import CreateAsset from "./pages/CreateAsset";
 import MyAssets from "./pages/MyAsset";
+
+import Inbox from "./pages/Inbox";
+import BuyTokens from "./pages/BuyTokens";
+import AssetDetail from "./pages/AssetDetail";
+import EditAsset from "./pages/EditAsset";
+import Purchases from "./pages/Purchases";
+import Profile from "./pages/Profile";
+import SellerOrders from "./pages/SellerOrders";
+import ArtistProfile from "./pages/ArtistProfile";
+import About from "./pages/About";
 function App() {
   return (
     <BrowserRouter>
@@ -17,12 +28,19 @@ function App() {
         <Routes>
 
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/dashboard" replace />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Public Routes */}
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/verify-otp" element={<PublicRoute><VerifyOtp /></PublicRoute>} />
 
 
           {/* Protected Routes with Layout */}
@@ -53,6 +71,110 @@ function App() {
               <Layout>
                 <MyAssets />
               </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/inbox"
+            element={
+              <ProtectedRoute>
+                <Inbox />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/chat/:id"
+            element={
+              <ProtectedRoute>
+                <Inbox />
+              </ProtectedRoute>
+            }
+/>
+
+<Route
+  path="/buy-tokens"
+  element={
+    <ProtectedRoute>
+      <BuyTokens />
+    </ProtectedRoute>
+  }
+/>
+
+          <Route
+            path="/assets/:assetId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AssetDetail />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/assets/:assetId/edit"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <EditAsset />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/artists/:artistId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ArtistProfile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/purchases"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Purchases />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Profile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/seller-orders"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SellerOrders />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <About />
+                </Layout>
               </ProtectedRoute>
             }
           />

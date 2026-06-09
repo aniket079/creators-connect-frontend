@@ -1,1 +1,48 @@
 @import "tailwindcss";
+
+@layer base {
+  body {
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    letter-spacing: 0;
+  }
+}
+
+@layer components {
+  .cc-page-shell {
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 30rem),
+      radial-gradient(circle at top right, rgba(20, 184, 166, 0.12), transparent 28rem),
+      linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  }
+
+  .cc-panel {
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07);
+    backdrop-filter: blur(18px);
+  }
+
+  .cc-input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid #cbd5e1;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  .cc-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+}

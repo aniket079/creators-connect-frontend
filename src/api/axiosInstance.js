@@ -1,8 +1,7 @@
 import axios from "axios";
 import { errorToast } from "../utils/toast";
-import { loginUser } from "./authApi";
 const axiosInstance = axios.create({
-  baseURL: "https://creators-connect-backend.onrender.com/api",
+  baseURL: "http://localhost:8080/api",
   withCredentials: true
 });
 
@@ -13,12 +12,20 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
+    const requestUrl = error.config?.url || "";
+    const isAuthCheck = requestUrl.includes("/auth/me");
+    const isAuthAction =
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/logout") ||
+      requestUrl.includes("/auth/verify-otp");
 
-    // Optional: handle global 401 here
     if (error.response?.status === 401) {
-      errorToast("Unauthorized request")
-      loginUser();
-      console.log("Unauthorized request");
+      if (!isAuthCheck && !isAuthAction) {
+        errorToast("Session expired. Please login again.");
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("auth:session-expired"));
+        }
+      }
     }
 
     return Promise.reject(error);

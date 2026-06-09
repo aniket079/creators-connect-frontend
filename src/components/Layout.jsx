@@ -2,11 +2,11 @@ import Navbar from "./Navbar";
 
 const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="cc-page-shell min-h-screen">
       <Navbar />
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {children}
-      </div>
+      </main>
     </div>
   );
 };

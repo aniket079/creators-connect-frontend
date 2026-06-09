@@ -1,33 +1,70 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { getCurrentUser } from "../api/authApi";
-
-const AuthContext = createContext();
+import { useCallback, useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { getCurrentUser, logoutUser } from "../api/authApi";
+import { clearUser, setUser as setReduxUser } from "../store/slices/authSlice";
+import AuthContext from "./AuthContextStore";
 
 export const AuthProvider = ({ children }) => {
 
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+
+  const setAuthenticatedUser = useCallback((user) => {
+    dispatch(setReduxUser(user));
+  }, [dispatch]);
+
+  const clearAuthenticatedUser = useCallback(() => {
+    dispatch(clearUser());
+  }, [dispatch]);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const data = await getCurrentUser();
+      setAuthenticatedUser(data);
+      return data;
+    } catch {
+      clearAuthenticatedUser();
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [clearAuthenticatedUser, setAuthenticatedUser]);
+
+  const logout = useCallback(async () => {
+    try {
+      await logoutUser();
+    } finally {
+      clearAuthenticatedUser();
+    }
+  }, [clearAuthenticatedUser]);
 
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        const data = await getCurrentUser();
-        setUser(data);
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+    refreshUser();
+  }, [refreshUser]);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      clearAuthenticatedUser();
     };
 
-    initialize();
-  }, []);
+    window.addEventListener("auth:session-expired", handleSessionExpired);
+
+    return () => {
+      window.removeEventListener("auth:session-expired", handleSessionExpired);
+    };
+  }, [clearAuthenticatedUser]);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading }}>
+    <AuthContext.Provider
+      value={{
+        loading,
+        refreshUser,
+        setAuthenticatedUser,
+        clearAuthenticatedUser,
+        logout
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);

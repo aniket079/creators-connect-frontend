@@ -1,0 +1,331 @@
+Redux Architecture
+
+Redux has 3 core pieces:
+
+1️ Store → Global state container
+2️ Slice → State + Reducers
+3️ Dispatch → Action trigger
+
+Component → dispatch(action)
+           ↓
+Reducer updates state
+           ↓
+Store updates
+           ↓
+Subscribed components re-render
+
+
+One-directional and predictable.
+
+
+Does state persist across pages in useState and Redux?
+persistence depends on where the state lives.
+useState – Does It Persist?
+It depends on where it is defined.
+
+When you leave /dashboard:
+
+Dashboard component unmounts
+Its state is destroyed
+When you return → state resets
+
+
+case B
+const App = () => {
+  const [user, setUser] = useState(null);
+}
+Since App never unmounts:
+State persists across routes
+But refresh clears it
+So useState can persist across pages — if defined high enough.
+
+Redux – Does It Persist?
+
+Redux store:
+
+Lives at application root
+
+Does NOT unmount on route change
+
+So:
+Navigate between pages → state stays
+
+Components unmount → store still alive
+Refresh browser → store resets
+
+ Redux persists across pages
+ Redux does NOT persist across refresh (unless you use persistence library)
+
+
+
+
+ What is Redux?
+
+Redux is:
+
+A centralized state container for your entire application.
+
+Instead of:
+
+State inside components
+
+
+You get:
+
+One global store
+
+🏗 Redux Core Pieces
+
+There are 5 main concepts you must understand:
+
+1️ Store
+2️ Slice
+3️ Reducer
+4️ Dispatch
+5️ Selector
+
+We’ll go one by one.
+
+ Store – The Brain
+
+The store is the central warehouse of state.
+
+In your project:
+
+ store.js
+
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
+
+const store = configureStore({
+  reducer: {
+    auth: authReducer
+  }
+});
+
+export default store;
+
+
+This creates:
+
+Global state = {
+   auth: { user: null }
+}
+
+
+Think of store as:
+
+A building
+Each slice = a room
+
+ Slice – A Section of State
+
+A slice contains:
+
+Initial state
+
+Reducers (logic to change state)
+
+Generated actions
+
+Example:
+
+ authSlice.js
+
+import { createSlice } from "@reduxjs/toolkit";
+
+const initialState = {
+  user: null
+};
+
+const authSlice = createSlice({
+  name: "auth",
+  initialState,
+  reducers: {
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
+    clearUser: (state) => {
+      state.user = null;
+    }
+  }
+});
+
+export const { setUser, clearUser } = authSlice.actions;
+export default authSlice.reducer;
+
+What createSlice does:
+
+It automatically creates:
+
+Action types
+
+Action creators
+
+Reducer function
+
+Without writing switch-case manually.
+
+ Reducer – The State Changer
+
+Reducer is a pure function that:
+
+Receives current state
+
+Receives action
+
+Returns new state
+
+Old Redux style:
+
+function reducer(state, action) {
+  switch(action.type) {
+    case "SET_USER":
+      return { ...state, user: action.payload };
+  }
+}
+
+
+Redux Toolkit simplifies it:
+
+setUser: (state, action) => {
+  state.user = action.payload;
+}
+
+
+Even though it looks like mutation, it’s not.
+
+Redux Toolkit uses:
+
+ Immer (immutable state handling internally)
+
+Dispatch – The Trigger
+
+Dispatch is how you tell Redux:
+
+“Hey, update the state.”
+
+Example in Login:
+
+import { useDispatch } from "react-redux";
+import { setUser } from "../store/slices/authSlice";
+
+const dispatch = useDispatch();
+
+dispatch(setUser(data));
+
+
+Flow:
+
+dispatch(setUser(data))
+        ↓
+Reducer runs
+        ↓
+State updates
+        ↓
+Subscribed components re-render
+
+ Selector – Reading State
+
+Selector is how you access store state.
+
+Example in Navbar:
+
+import { useSelector } from "react-redux";
+
+const user = useSelector((state) => state.auth.user);
+
+
+This means:
+
+“Give me the user from auth slice.”
+
+Important:
+
+Component only re-renders if selected value changes.
+
+That’s powerful.
+
+ Complete Flow Example (From Your Project)
+Step 1 – Login API Success
+dispatch(setUser(data));
+
+Step 2 – Reducer Executes
+state.user = data;
+
+Step 3 – Store Updates
+store = {
+  auth: {
+    user: {...}
+  }
+}
+
+Step 4 – Navbar Re-renders
+
+Because:
+
+const user = useSelector(state => state.auth.user);
+
+
+Navbar subscribes to that slice.
+
+ Visual Diagram
+Component
+   ↓ dispatch(action)
+Store
+   ↓
+Reducer
+   ↓
+Updated State
+   ↓
+Subscribed Components
+
+
+One-directional.
+
+Predictable.
+
+ Why Selector is Powerful
+
+Imagine this state:
+
+{
+  auth: { user },
+  assets: { publicAssets, myAssets },
+  chat: { messages }
+}
+
+
+If you do:
+
+const user = useSelector(state => state.auth.user);
+
+
+Navbar only re-renders if:
+
+state.auth.user changes
+
+
+Not when assets change.
+
+Context cannot do this selectively.
+
+ Action
+
+Action is just an object:
+
+{
+  type: "auth/setUser",
+  payload: userData
+}
+
+
+Redux Toolkit auto-generates this.
+
+ What Students Must Remember
+
+Dispatch → triggers state change
+Reducer → decides how state changes
+Selector → reads specific part
+Store → holds entire state
+Slice → groups logic + state
