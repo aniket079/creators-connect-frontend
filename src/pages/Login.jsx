@@ -7,8 +7,8 @@ import { errorToast, successToast } from "../utils/toast";
 
 const demoCredentials = {
   userId: "seed-demo-user",
-  email: "demo.creator@example.com",
-  password: "Demo@12345"
+  email: "isha.photographer@test.com",
+  password: "Test@12345"
 };
 
 const Login = () => {

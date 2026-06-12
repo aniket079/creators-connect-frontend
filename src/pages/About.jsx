@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 
 const contact = {
   email: "anikettiwari.0793112@gmail.com",
+  github: "https://github.com/aniket079/creators-connect-backend",
   linkedin: "https://www.linkedin.com/in/aniket-tiwari-667082203",
   phone: "+917607575887"
 };
@@ -92,6 +93,11 @@ const contactLinks = [
     href: `mailto:${contact.email}`
   },
   {
+    label: "GitHub",
+    value: contact.github.replace("https://", ""),
+    href: contact.github
+  },
+  {
     label: "LinkedIn",
     value: contact.linkedin.replace("https://www.", ""),
     href: contact.linkedin
@@ -162,8 +168,8 @@ const About = () => {
                   <a
                     key={item.label}
                     href={item.href}
-                    target={item.label === "LinkedIn" ? "_blank" : undefined}
-                    rel={item.label === "LinkedIn" ? "noreferrer" : undefined}
+                    target={item.href.startsWith("http") ? "_blank" : undefined}
+                    rel={item.href.startsWith("http") ? "noreferrer" : undefined}
                     className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 px-4 py-3 transition hover:border-blue-300 hover:bg-blue-50"
                   >
                     <span className="text-sm font-bold text-slate-500">
