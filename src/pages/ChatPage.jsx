@@ -15,6 +15,7 @@ import { getMessages, markConversationRead, uploadChatMedia } from "../api/chatA
 import socket from "../socket/socket";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { errorToast } from "../utils/toast";
+import { getUserImage, getUserTokenBalance } from "../utils/user";
 
 const noTokensMessage = "No tokens left. Please recharge your tokens to continue chatting.";
 
@@ -51,6 +52,7 @@ const ChatPage = () => {
   const conversations = useSelector((state) => state.chat.conversations);
   const user = useSelector((state) => state.auth.user);
   const userId = user?._id || user?.id;
+  const tokenBalance = getUserTokenBalance(user);
 
   const [text, setText] = useState("");
   const [attachment, setAttachment] = useState(null);
@@ -102,6 +104,7 @@ const ChatPage = () => {
       (participant) => participant._id !== userId
     );
   }, [activeConversation, userId]);
+  const otherUserImage = getUserImage(otherUser);
 
   const markActiveConversationRead = useCallback(async () => {
     if (!id || !userId) return;
@@ -318,7 +321,7 @@ const ChatPage = () => {
     const messageAttachments = attachment ? [attachment] : [];
     if ((!messageText && messageAttachments.length === 0) || uploadingAttachment) return;
 
-    if (hasNoTokensLeft(user?.token)) {
+    if (hasNoTokensLeft(tokenBalance)) {
       showNoTokensAlert();
       return;
     }
@@ -330,7 +333,7 @@ const ChatPage = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  }, [attachment, queueMessage, showNoTokensAlert, text, uploadingAttachment, user?.token]);
+  }, [attachment, queueMessage, showNoTokensAlert, text, tokenBalance, uploadingAttachment]);
 
   const handleAttachmentChange = useCallback(async (event) => {
     const file = event.target.files?.[0];
@@ -385,9 +388,17 @@ const ChatPage = () => {
           Back
         </button>
 
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
-          {otherUser?.name?.charAt(0)?.toUpperCase() || "?"}
-        </div>
+        {otherUserImage ? (
+          <img
+            src={otherUserImage}
+            alt={otherUser?.name || "Creator"}
+            className="h-10 w-10 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+            {otherUser?.name?.charAt(0)?.toUpperCase() || "?"}
+          </div>
+        )}
 
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold text-slate-950">

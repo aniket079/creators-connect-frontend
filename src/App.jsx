@@ -27,13 +27,13 @@ function App() {
         <Toaster position="top-right" />
         <Routes>
 
-          {/* Default redirect */}
+          {/* Public landing page */}
           <Route
             path="/"
             element={
-              <ProtectedRoute>
-                <Navigate to="/dashboard" replace />
-              </ProtectedRoute>
+              <Layout>
+                <About />
+              </Layout>
             }
           />
 
@@ -171,11 +171,9 @@ function App() {
           <Route
             path="/about"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <About />
-                </Layout>
-              </ProtectedRoute>
+              <Layout>
+                <About />
+              </Layout>
             }
           />
 

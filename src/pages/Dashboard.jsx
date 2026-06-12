@@ -1,18 +1,52 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getPublicAssets } from "../api/assetApi";
 import { createConversation } from "../api/chatApi";
 import { useDispatch, useSelector } from "react-redux";
 import { setPublicAssets, setLoading } from "../store/slices/assetSlice";
+import {
+  setRecommendedAssets,
+  setRecommendedCreators,
+  setRecommendationsLoading,
+  clearRecommendations
+} from "../store/slices/recommendationSlice";
+import {
+  getRecommendedAssets,
+  getRecommendedCreators,
+  trackActivity
+} from "../api/recommendationApi";
 import { useNavigate } from "react-router-dom";
 
 const getAssetPreviewUrl = (asset) => asset.thumbnailUrl || asset.previewUrl || asset.url;
+
+const formatRecommendationBasis = (basis) => {
+  if (!basis) return "";
+  if (typeof basis === "string") return basis;
+  if (Array.isArray(basis)) return basis.filter(Boolean).join(", ");
+  if (typeof basis === "object") {
+    return basis.label || basis.name || basis.type || basis.category || "your recent activity";
+  }
+
+  return String(basis);
+};
 
 const Dashboard = () => {
   
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const marketplaceRef = useRef(null);
   const assets = useSelector((state) => state.assets.publicAssets);
   const loading = useSelector((state) => state.assets.loading);
+  const recommendedAssets = useSelector((state) => state.recommendations.assets);
+  const recommendedCreators = useSelector((state) => state.recommendations.creators);
+  const recommendationBasis = useSelector((state) => state.recommendations.basedOn);
+  const loadingRecommendedAssets = useSelector(
+    (state) => state.recommendations.loadingAssets
+  );
+  const loadingRecommendedCreators = useSelector(
+    (state) => state.recommendations.loadingCreators
+  );
+  const user = useSelector((state) => state.auth.user);
+  const userId = user?._id || user?.id;
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -61,6 +95,35 @@ const Dashboard = () => {
     fetchAssets();
   }, [fetchAssets]);
 
+  useEffect(() => {
+    if (!userId) {
+      dispatch(clearRecommendations());
+      return;
+    }
+
+    const fetchRecommendations = async () => {
+      try {
+        dispatch(setRecommendationsLoading({ type: "assets", loading: true }));
+        dispatch(setRecommendationsLoading({ type: "creators", loading: true }));
+
+        const [assetData, creatorData] = await Promise.all([
+          getRecommendedAssets(6, { ai: true }),
+          getRecommendedCreators(5, { ai: true })
+        ]);
+
+        dispatch(setRecommendedAssets(assetData));
+        dispatch(setRecommendedCreators(creatorData));
+      } catch {
+        // Recommendations are optional; marketplace browsing should still work.
+      } finally {
+        dispatch(setRecommendationsLoading({ type: "assets", loading: false }));
+        dispatch(setRecommendationsLoading({ type: "creators", loading: false }));
+      }
+    };
+
+    fetchRecommendations();
+  }, [dispatch, userId]);
+
   const pageNumbers = useMemo(() => {
     const totalPages = pagination.totalPages || 1;
     const start = Math.max(1, page - 1);
@@ -68,6 +131,27 @@ const Dashboard = () => {
 
     return Array.from({ length: end - start + 1 }, (_, index) => start + index);
   }, [page, pagination.totalPages]);
+
+  const assetRecommendationBasis = useMemo(
+    () => formatRecommendationBasis(recommendationBasis.assets),
+    [recommendationBasis.assets]
+  );
+
+  const scrollToMarketplace = () => {
+    window.requestAnimationFrame(() => {
+      marketplaceRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    });
+  };
+
+  const handlePageChange = (nextPage) => {
+    if (nextPage === page || loading) return;
+
+    setPage(nextPage);
+    scrollToMarketplace();
+  };
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -87,12 +171,42 @@ const Dashboard = () => {
     try {
       const conversation = await createConversation(receiverId);
 
+      trackActivity({
+        type: "message",
+        targetType: "creator",
+        targetId: receiverId
+      }).catch(() => {});
+
       navigate(`/chat/${conversation._id}`, {
         state: { receiverId }
       });
     } catch {
       // Chat failures are handled silently here to keep marketplace browsing uninterrupted.
     }
+  };
+
+  const openAsset = (assetId) => {
+    if (!assetId) return;
+
+    trackActivity({
+      type: "view",
+      targetType: "asset",
+      targetId: assetId
+    }).catch(() => {});
+
+    navigate(`/assets/${assetId}`);
+  };
+
+  const openCreator = (creatorId) => {
+    if (!creatorId) return;
+
+    trackActivity({
+      type: "view",
+      targetType: "creator",
+      targetId: creatorId
+    }).catch(() => {});
+
+    navigate(`/artists/${creatorId}`);
   };
 
   return (
@@ -145,7 +259,7 @@ const Dashboard = () => {
                 <button
                   key={asset._id}
                   type="button"
-                  onClick={() => navigate(`/assets/${asset._id}`)}
+                  onClick={() => openAsset(asset._id)}
                   className="group overflow-hidden rounded-lg bg-slate-900 text-left"
                 >
                   {asset.type === "video" ? (
@@ -203,6 +317,180 @@ const Dashboard = () => {
         </div>
       </section>
 
+      {(loadingRecommendedAssets ||
+        loadingRecommendedCreators ||
+        recommendedAssets.length > 0 ||
+        recommendedCreators.length > 0) && (
+        <section className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-teal-700">
+                  Picked for you
+                </p>
+                <h2 className="mt-1 text-2xl font-black text-slate-950">
+                  Recommended assets
+                </h2>
+              </div>
+              <p className="text-sm text-slate-500">
+                {loadingRecommendedAssets
+                  ? "Finding the best matches..."
+                  : assetRecommendationBasis
+                    ? `Based on ${assetRecommendationBasis}`
+                    : "Personalized from your activity"}
+              </p>
+            </div>
+
+            {loadingRecommendedAssets && (
+              <div className="grid gap-4 md:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                    <div className="h-44 animate-pulse bg-slate-200" />
+                    <div className="space-y-3 p-4">
+                      <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
+                      <div className="h-3 w-full animate-pulse rounded bg-slate-200" />
+                      <div className="h-9 w-full animate-pulse rounded bg-slate-200" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!loadingRecommendedAssets && recommendedAssets.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-3">
+                {recommendedAssets.slice(0, 3).map((asset) => (
+                  <article
+                    key={asset._id}
+                    className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openAsset(asset._id)}
+                      className="block w-full overflow-hidden bg-slate-950 text-left"
+                    >
+                      {asset.type === "video" ? (
+                        <video
+                          src={getAssetPreviewUrl(asset)}
+                          poster={asset.thumbnailUrl}
+                          className="h-44 w-full object-cover opacity-95"
+                          muted
+                          loop
+                          playsInline
+                          autoPlay
+                          controls={false}
+                          controlsList="nodownload noplaybackrate nofullscreen"
+                          disablePictureInPicture
+                        />
+                      ) : (
+                        <img
+                          src={getAssetPreviewUrl(asset)}
+                          alt={asset.title}
+                          className="h-44 w-full object-cover opacity-95 transition duration-300 group-hover:scale-105"
+                        />
+                      )}
+                    </button>
+
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="line-clamp-1 text-base font-bold text-slate-950">
+                            {asset.title}
+                          </h3>
+                          <p className="mt-1 truncate text-sm text-slate-500">
+                            {asset.owner?.name || "Creator"}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-700">
+                          Match
+                        </span>
+                      </div>
+
+                      {asset.aiReason && (
+                        <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-600">
+                          {asset.aiReason}
+                        </p>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => openAsset(asset._id)}
+                        className="mt-4 w-full rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5">
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
+                Creator matches
+              </p>
+              <h2 className="mt-1 text-xl font-black text-slate-950">
+                Creators you may like
+              </h2>
+            </div>
+
+            {loadingRecommendedCreators && (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="flex items-center gap-3 rounded-lg border border-slate-100 p-3">
+                    <div className="h-11 w-11 animate-pulse rounded-full bg-slate-200" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-slate-200" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!loadingRecommendedCreators && recommendedCreators.length > 0 && (
+              <div className="space-y-3">
+                {recommendedCreators.slice(0, 4).map((creator) => {
+                  const creatorImage =
+                    creator.avatar || creator.profileImage || creator.avatarUrl;
+
+                  return (
+                    <button
+                      key={creator._id}
+                      type="button"
+                      onClick={() => openCreator(creator._id)}
+                      className="flex w-full items-center gap-3 rounded-lg border border-slate-100 p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60"
+                    >
+                      {creatorImage ? (
+                        <img
+                          src={creatorImage}
+                          alt={creator.name || "Creator"}
+                          className="h-11 w-11 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700">
+                          {(creator.name || "C").slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                      <span className="min-w-0">
+                        <span className="block truncate font-bold text-slate-950">
+                          {creator.name || "Creator"}
+                        </span>
+                        <span className="mt-0.5 block truncate text-sm text-slate-500">
+                          {creator.profession || creator.category || creator.title || "Artist"}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </aside>
+        </section>
+      )}
+
+      <section ref={marketplaceRef} className="scroll-mt-6">
       <div className="mb-4 flex items-center justify-between text-sm text-slate-500">
         <span>
           {loading
@@ -296,7 +584,7 @@ const Dashboard = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate(`/assets/${asset._id}`)}
+                  onClick={() => openAsset(asset._id)}
                   className="mt-4 w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   View Details
@@ -318,7 +606,7 @@ const Dashboard = () => {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
           <button
             type="button"
-            onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
+            onClick={() => handlePageChange(Math.max(1, page - 1))}
             disabled={page <= 1 || loading}
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -329,7 +617,7 @@ const Dashboard = () => {
             <button
               key={pageNumber}
               type="button"
-              onClick={() => setPage(pageNumber)}
+              onClick={() => handlePageChange(pageNumber)}
               disabled={loading}
               className={`h-10 min-w-10 rounded-lg px-3 text-sm font-semibold transition ${
                 pageNumber === page
@@ -343,11 +631,7 @@ const Dashboard = () => {
 
           <button
             type="button"
-            onClick={() =>
-              setPage((currentPage) =>
-                Math.min(pagination.totalPages, currentPage + 1)
-              )
-            }
+            onClick={() => handlePageChange(Math.min(pagination.totalPages, page + 1))}
             disabled={page >= pagination.totalPages || loading}
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -355,6 +639,7 @@ const Dashboard = () => {
           </button>
         </div>
       )}
+      </section>
     </>
   );
 };

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { getArtistAssets, getArtistById } from "../api/assetApi";
+import { trackActivity } from "../api/recommendationApi";
 import { errorToast } from "../utils/toast";
 
 const getArtistImage = (artist) => artist?.avatar || artist?.profileImage;
@@ -40,6 +42,8 @@ const getSocialUrl = (value) => {
 const ArtistProfile = () => {
   const { artistId } = useParams();
   const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+  const userId = user?._id || user?.id;
 
   const [artist, setArtist] = useState(null);
   const [assets, setAssets] = useState([]);
@@ -103,6 +107,16 @@ const ArtistProfile = () => {
   useEffect(() => {
     fetchAssets();
   }, [fetchAssets]);
+
+  useEffect(() => {
+    if (!artistId || !userId) return;
+
+    trackActivity({
+      type: "view",
+      targetType: "creator",
+      targetId: artistId
+    }).catch(() => {});
+  }, [artistId, userId]);
 
   const pageNumbers = useMemo(() => {
     const totalPages = pagination.pages || 1;

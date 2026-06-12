@@ -4,6 +4,12 @@ import { sendOtp } from "../api/authApi";
 import Button from "../components/Button";
 import { errorToast, successToast } from "../utils/toast";
 
+const demoCredentials = {
+  userId: "seed-demo-user",
+  email: "demo.creator@example.com",
+  password: "Demo@12345"
+};
+
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -39,6 +45,14 @@ const Signup = () => {
     }
   };
 
+  const fillDemoProfile = () => {
+    setFormData({
+      name: "Demo Creator",
+      email: demoCredentials.email,
+      password: demoCredentials.password
+    });
+  };
+
   return (
     <div className="cc-page-shell flex min-h-screen items-center justify-center px-4 py-10">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl shadow-slate-950/10 lg:grid-cols-[0.85fr_1fr]">
@@ -56,6 +70,7 @@ const Signup = () => {
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <input
               name="name"
+              value={formData.name}
               placeholder="Name"
               onChange={handleChange}
               className="cc-input"
@@ -63,6 +78,7 @@ const Signup = () => {
 
             <input
               name="email"
+              value={formData.email}
               placeholder="Email"
               onChange={handleChange}
               className="cc-input"
@@ -71,6 +87,7 @@ const Signup = () => {
             <input
               name="password"
               type="password"
+              value={formData.password}
               placeholder="Password"
               onChange={handleChange}
               className="cc-input"
@@ -80,6 +97,28 @@ const Signup = () => {
               {loading ? "Sending OTP..." : "Send OTP"}
             </Button>
           </form>
+
+          <div className="mt-5 rounded-lg border border-teal-100 bg-teal-50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-black text-slate-950">
+                  Demo seeded user
+                </p>
+                <div className="mt-2 space-y-1 text-sm text-slate-600">
+                  <p>User ID: {demoCredentials.userId}</p>
+                  <p>Email: {demoCredentials.email}</p>
+                  <p>Password: {demoCredentials.password}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={fillDemoProfile}
+                className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700"
+              >
+                Fill Demo
+              </button>
+            </div>
+          </div>
 
           <p className="mt-5 text-center text-sm text-slate-500">
             Already have an account?{" "}

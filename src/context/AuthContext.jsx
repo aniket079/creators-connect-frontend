@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { getCurrentUser, logoutUser } from "../api/authApi";
 import { clearUser, setUser as setReduxUser } from "../store/slices/authSlice";
 import AuthContext from "./AuthContextStore";
+import { normalizeAuthUser } from "../utils/user";
 
 export const AuthProvider = ({ children }) => {
 
@@ -10,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();
 
   const setAuthenticatedUser = useCallback((user) => {
-    dispatch(setReduxUser(user));
+    dispatch(setReduxUser(normalizeAuthUser(user)));
   }, [dispatch]);
 
   const clearAuthenticatedUser = useCallback(() => {

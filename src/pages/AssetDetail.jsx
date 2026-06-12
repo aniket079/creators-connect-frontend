@@ -6,6 +6,7 @@ import {
   getAssetById,
   verifyAssetPurchase
 } from "../api/assetApi";
+import { trackActivity } from "../api/recommendationApi";
 import { createAddress, getAddresses } from "../api/userApi";
 import { errorToast, successToast } from "../utils/toast";
 
@@ -89,6 +90,16 @@ const AssetDetail = () => {
       isMounted = false;
     };
   }, [assetId]);
+
+  useEffect(() => {
+    if (!assetId || !userId) return;
+
+    trackActivity({
+      type: "view",
+      targetType: "asset",
+      targetId: assetId
+    }).catch(() => {});
+  }, [assetId, userId]);
 
   const galleryItems = useMemo(() => {
     if (!asset) return [];
@@ -252,6 +263,11 @@ const AssetDetail = () => {
               ? "Purchase complete. Your download is ready."
               : "Order placed successfully"
           );
+          trackActivity({
+            type: "purchase",
+            targetType: "asset",
+            targetId: assetId
+          }).catch(() => {});
           navigate("/purchases");
         },
         theme: {

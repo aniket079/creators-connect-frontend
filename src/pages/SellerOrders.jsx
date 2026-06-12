@@ -14,6 +14,10 @@ const SellerOrders = () => {
   const [loading, setLoading] = useState(false);
   const [savingOrderId, setSavingOrderId] = useState("");
   const [drafts, setDrafts] = useState({});
+  const activePhysicalOrders = orders.filter(
+    (order) => !["delivered", "cancelled"].includes(order.orderStatus)
+  ).length;
+  const deliveredOrders = orders.filter((order) => order.orderStatus === "delivered").length;
 
   const fetchOrders = async () => {
     try {
@@ -76,16 +80,48 @@ const SellerOrders = () => {
           Fulfillment
         </p>
         <h2 className="mt-2 text-3xl font-black">Seller Orders</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-300">
-          Manage delivery status for orders placed on your artworks.
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+          Manage delivery status, tracking details, and digital sales for orders placed on your artworks.
         </p>
       </div>
 
-      {loading && <div className="text-sm text-slate-500">Loading orders...</div>}
+      <div className="grid gap-4 md:grid-cols-4">
+        {[
+          ["Physical orders", orders.length],
+          ["Active fulfillment", activePhysicalOrders],
+          ["Delivered", deliveredOrders],
+          ["Digital sales", digitalOrders.length]
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">{label}</p>
+            <p className="mt-2 text-3xl font-black text-slate-950">{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {loading && (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
+                <div className="h-28 animate-pulse rounded-lg bg-slate-200" />
+                <div className="space-y-3">
+                  <div className="h-5 w-1/3 animate-pulse rounded bg-slate-200" />
+                  <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200" />
+                  <div className="h-20 animate-pulse rounded bg-slate-100" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {!loading && orders.length === 0 && digitalOrders.length === 0 && (
         <div className="cc-panel rounded-lg px-6 py-12 text-center">
           <p className="text-base font-semibold text-slate-900">No seller orders yet</p>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+            Once buyers purchase your assets, physical fulfillment and digital sales records will appear here.
+          </p>
         </div>
       )}
 

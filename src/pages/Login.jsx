@@ -5,6 +5,12 @@ import Button from "../components/Button";
 import useAuth from "../hooks/useAuth";
 import { errorToast, successToast } from "../utils/toast";
 
+const demoCredentials = {
+  userId: "seed-demo-user",
+  email: "demo.creator@example.com",
+  password: "Demo@12345"
+};
+
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -38,6 +44,13 @@ const Login = () => {
     }
   };
 
+  const fillDemoCredentials = () => {
+    setFormData({
+      email: demoCredentials.email,
+      password: demoCredentials.password
+    });
+  };
+
   return (
     <div className="cc-page-shell flex min-h-screen items-center justify-center px-4 py-10">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl shadow-slate-950/10 lg:grid-cols-[1fr_0.85fr]">
@@ -54,10 +67,20 @@ const Login = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="h-28 rounded-lg bg-blue-500/80" />
-            <div className="h-28 rounded-lg bg-teal-400/80" />
-            <div className="h-28 rounded-lg bg-slate-700" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="h-28 rounded-lg bg-blue-500/80" />
+              <div className="h-28 rounded-lg bg-teal-400/80" />
+              <div className="h-28 rounded-lg bg-slate-700" />
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/10 p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-teal-200">
+                Demo account
+              </p>
+              <p className="mt-2 text-sm text-slate-300">
+                Use the seeded demo user to preview marketplace, orders, chat, purchases, and recommendations.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -75,6 +98,7 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <input
               name="email"
+              value={formData.email}
               placeholder="Email"
               onChange={handleChange}
               className="cc-input"
@@ -83,6 +107,7 @@ const Login = () => {
             <input
               name="password"
               type="password"
+              value={formData.password}
               placeholder="Password"
               onChange={handleChange}
               className="cc-input"
@@ -92,6 +117,28 @@ const Login = () => {
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
+
+          <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-black text-slate-950">
+                  Demo login
+                </p>
+                <div className="mt-2 space-y-1 text-sm text-slate-600">
+                  <p>User ID: {demoCredentials.userId}</p>
+                  <p>Email: {demoCredentials.email}</p>
+                  <p>Password: {demoCredentials.password}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={fillDemoCredentials}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+              >
+                Use Demo
+              </button>
+            </div>
+          </div>
 
           <p className="mt-5 text-center text-sm text-slate-500">
             Don&apos;t have an account?{" "}

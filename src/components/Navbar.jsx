@@ -2,12 +2,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useState } from "react";
 import useAuth from "../hooks/useAuth";
-
-const getUserImage = (user) =>
-  user?.avatar ||
-  user?.profileImage ||
-  user?.avatarUrl ||
-  user?.image;
+import { getUserImage, getUserTokenBalance } from "../utils/user";
 
 const navItems = [
   { to: "/dashboard", label: "Explore" },
@@ -24,6 +19,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const userImage = getUserImage(user);
+  const tokenBalance = getUserTokenBalance(user);
 
   const handleLogout = async () => {
     await logout();
@@ -40,7 +36,7 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-        <Link to="/dashboard" className="flex min-w-0 items-center gap-3">
+        <Link to={user ? "/dashboard" : "/"} className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-black text-white shadow-lg shadow-blue-600/20">
             CC
           </div>
@@ -71,7 +67,7 @@ const Navbar = () => {
                 to="/buy-tokens"
                 className="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
               >
-                {user?.token ?? 0} Tokens
+                {tokenBalance} Tokens
               </Link>
               <Link
                 to="/create-asset"
@@ -149,7 +145,7 @@ const Navbar = () => {
                 <div className="min-w-0">
                   <p className="truncate font-bold text-slate-950">{user.name}</p>
                   <p className="text-sm font-medium text-blue-700">
-                    {user?.token ?? 0} Tokens
+                    {tokenBalance} Tokens
                   </p>
                 </div>
               </div>

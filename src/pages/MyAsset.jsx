@@ -9,46 +9,91 @@ const getAssetPlaybackUrl = (asset) => asset?.previewUrl || asset?.url;
 const MyAssets = () => {
 
     const [assets, setAssets] = useState([]);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
         let isMounted = true;
 
-        getMyAssets({ page: 1 }).then((data) => {
-            if (isMounted) {
-                setAssets(data.assets);
+        const fetchAssets = async () => {
+            try {
+                setLoading(true);
+                const data = await getMyAssets({ page: 1 });
+
+                if (isMounted) {
+                    setAssets(data.assets || []);
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
-        });
+        };
+
+        fetchAssets();
 
         return () => {
             isMounted = false;
         };
     }, []);
 
+    const publicCount = assets.filter((asset) => asset.visibility === "public").length;
+    const privateCount = assets.length - publicCount;
+
     return (
         <>
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-6 rounded-lg bg-slate-950 p-6 text-white">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+                    <p className="text-sm font-semibold uppercase tracking-wide text-teal-200">
                         Creator studio
                     </p>
-                    <h2 className="mt-1 text-3xl font-black text-slate-950">
+                    <h2 className="mt-2 text-3xl font-black">
                         My Assets
                     </h2>
-                    <p className="mt-2 text-sm text-slate-500">
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
                         Review your published work and edit marketplace details.
                     </p>
                 </div>
                 <button
                     type="button"
                     onClick={() => navigate("/create-asset")}
-                    className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+                    className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
                 >
                     Create Asset
                 </button>
+                </div>
             </div>
 
-            {assets.length === 0 && (
+            <div className="mb-6 grid gap-4 md:grid-cols-3">
+                {[
+                    ["Total assets", assets.length],
+                    ["Public", publicCount],
+                    ["Private", privateCount]
+                ].map(([label, value]) => (
+                    <div key={label} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                        <p className="text-sm font-semibold text-slate-500">{label}</p>
+                        <p className="mt-2 text-3xl font-black text-slate-950">{value}</p>
+                    </div>
+                ))}
+            </div>
+
+            {loading && (
+                <div className="grid gap-6 md:grid-cols-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                        <div key={index} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                            <div className="h-56 animate-pulse bg-slate-200" />
+                            <div className="space-y-3 p-4">
+                                <div className="h-5 w-2/3 animate-pulse rounded bg-slate-200" />
+                                <div className="h-7 w-20 animate-pulse rounded-full bg-slate-200" />
+                                <div className="h-9 w-full animate-pulse rounded bg-slate-200" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {!loading && assets.length === 0 && (
                 <div className="cc-panel rounded-lg px-6 py-12 text-center">
                     <p className="text-base font-semibold text-slate-950">
                         No assets yet
@@ -56,9 +101,17 @@ const MyAssets = () => {
                     <p className="mt-2 text-sm text-slate-500">
                         Add your first artwork or digital asset to start building your portfolio.
                     </p>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/create-asset")}
+                        className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
+                    >
+                        Upload First Asset
+                    </button>
                 </div>
             )}
 
+            {!loading && assets.length > 0 && (
             <div className="grid gap-6 md:grid-cols-3">
                 {assets.map(asset => (
                     <div
@@ -127,6 +180,7 @@ const MyAssets = () => {
                     </div>
                 ))}
             </div>
+            )}
         </>
     );
 };

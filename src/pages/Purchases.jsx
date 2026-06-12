@@ -54,6 +54,10 @@ const Purchases = () => {
   const [loading, setLoading] = useState(false);
   const [downloadingPurchaseId, setDownloadingPurchaseId] = useState("");
 
+  const digitalCount = purchases.filter((purchase) => isDigitalPurchase(purchase)).length;
+  const physicalCount = purchases.length - digitalCount;
+  const readyCount = purchases.filter((purchase) => isDownloadReady(purchase)).length;
+
   useEffect(() => {
     let isMounted = true;
 
@@ -148,25 +152,64 @@ const Purchases = () => {
   return (
     <div className="space-y-6">
       <div className="rounded-lg bg-slate-950 p-6 text-white">
-        <p className="text-sm font-semibold uppercase tracking-wide text-teal-200">
-          Collection
-        </p>
-        <h2 className="mt-2 text-3xl font-black">
-          Purchased Assets
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-300">
-          Download digital media instantly or track physical artwork deliveries.
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-teal-200">
+              Collection
+            </p>
+            <h2 className="mt-2 text-3xl font-black">
+              Purchased Assets
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+              Download digital media instantly or track physical artwork deliveries.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
+          >
+            Browse Assets
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        {[
+          ["Total purchases", purchases.length],
+          ["Digital files", digitalCount],
+          ["Ready downloads", readyCount],
+          ["Physical orders", physicalCount]
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">{label}</p>
+            <p className="mt-2 text-3xl font-black text-slate-950">{value}</p>
+          </div>
+        ))}
       </div>
 
       {loading && (
-        <div className="text-sm text-slate-500">Loading purchases...</div>
+        <div className="grid gap-6 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="h-56 animate-pulse bg-slate-200" />
+              <div className="space-y-3 p-4">
+                <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-slate-200" />
+                <div className="h-9 w-full animate-pulse rounded bg-slate-200" />
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {!loading && purchases.length === 0 && (
         <div className="cc-panel rounded-lg px-6 py-12 text-center">
           <p className="text-base font-semibold text-slate-900">
             No purchased assets yet
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+            Your purchased digital downloads and physical artwork orders will appear here after checkout.
           </p>
           <button
             type="button"
